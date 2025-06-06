@@ -11,9 +11,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      color: Colors.white,
       title: 'Cenah News',
       debugShowCheckedModeBanner: false,
       home: const SplashScreen(),
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF007BFF), // warna biru dari tulisan NEWS
+          brightness: Brightness.light,
+        ),
+      ),
     );
   }
 }

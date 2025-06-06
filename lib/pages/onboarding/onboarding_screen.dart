@@ -1,184 +1,172 @@
+import 'package:cenah_news/pages/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 
-import 'package:cenah_news/pages/auth/login_screen.dart';
-
-class IntroductionScreen extends StatefulWidget {
-  const IntroductionScreen({super.key});
+class Introductionscreen extends StatefulWidget {
+  const Introductionscreen({super.key});
 
   @override
-  State<IntroductionScreen> createState() => _IntroductionScreenState();
+  State<Introductionscreen> createState() => _IntroductionscreenState();
 }
 
-class _IntroductionScreenState extends State<IntroductionScreen> {
-  final PageController _pageController = PageController();
+class _IntroductionscreenState extends State<Introductionscreen> {
   int _currentPage = 0;
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _onPageChanged(int index) {
-    setState(() {
-      _currentPage = index;
-    });
-  }
-
-  void _skipIntro() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const LoginScreen()), // Navigasi ke Login
-    );
-  }
+  final List<Map<String, String>> introData = [
+    {
+      "image": "assets/images/slide_1.png",
+      "title": "Selalu Update, Gak Kudet!",
+      "desc":
+          "Baca berita terkini dari berbagai topik — dari politik sampai gosip artis — semua langsung di genggamanmu.",
+    },
+    {
+      "image": "assets/images/slide_2.png",
+      "title": "Berita Valid, Bukan Katanya",
+      "desc":
+          "Kami pilihkan berita dari sumber terpercaya, biar kamu gak salah info dan tetap jadi yang paling tahu.",
+    },
+    {
+      "image": "assets/images/slide_3.png",
+      "title": "Topik Favorit? Langsung Ada!",
+      "desc":
+          "Suka bola? Teknologi? Kuliner? Kamu bisa pilih topik favorit, dan kami kasih berita yang kamu banget.",
+    },
+  ];
 
   void _nextPage() {
-    if (_currentPage < 1) { // Karena ada 2 slide (indeks 0 dan 1)
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeIn,
-      );
+    if (_currentPage < introData.length - 1) {
+      setState(() => _currentPage++);
     } else {
-      _skipIntro(); // Jika sudah slide terakhir, langsung ke login
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
     }
+  }
+
+  void _prevPage() {
+    if (_currentPage > 0) {
+      setState(() => _currentPage--);
+    }
+  }
+
+  Widget _buildDotIndicator(int index) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: _currentPage == index ? 14 : 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color:
+            _currentPage == index ? const Color(0xFF007BFF) : Colors.grey[400],
+        borderRadius: BorderRadius.circular(4),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final item = introData[_currentPage];
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      body: Stack(
-        children: [
-          PageView(
-            controller: _pageController,
-            onPageChanged: _onPageChanged,
-            children: const [
-              // Slide 1
-              IntroPage(
-                imagePath: 'assets/images/intro1.png', // Pastikan nama file cocok
-                title: 'Everything You Need to Know',
-                description: 'Get all the latest information, from politics, social, culinary and even occult information',
-              ),
-              // Slide 2 (sesuai UI yang Anda berikan, saya asumsikan ini slide terakhir sebelum Get Started)
-              IntroPage(
-                imagePath: 'assets/images/intro2.png', // Pastikan nama file cocok
-                title: "It's all here",
-                description: 'You can get all the latest gossip and news from various sources, all in one place',
-              ),
-              // Saya tidak menambahkan slide 3 karena Anda ingin hanya 2 slide
-              // Jika nanti ada perubahan dan perlu 3 slide, Anda bisa menambahkannya di sini.
-            ],
-          ),
-          // Dots Indicator
-          Align(
-            alignment: const Alignment(0, 0.7), // Sesuaikan posisi vertikal dots
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                2, // Jumlah slide
-                (index) => buildDot(index, _currentPage),
-              ),
-            ),
-          ),
-          // Buttons (Skip / Next / Get Started)
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 40.0, left: 20.0, right: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
                 children: [
-                  // Skip Button
-                  TextButton(
-                    onPressed: _skipIntro,
+                  SizedBox(
+                    height: screenHeight * 0.4,
+                    child: Image.asset(item['image']!, fit: BoxFit.contain),
+                  ),
+                  const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
-                      'Skip',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
+                      item['title']!,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                  // Next / Get Started Button
-                  ElevatedButton(
-                    onPressed: _nextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue, // Warna tombol
-                      foregroundColor: Colors.white, // Warna teks tombol
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      item['desc']!,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[800],
                       ),
                     ),
-                    child: Text(
-                      _currentPage == 1 ? 'Get Started' : 'Next',
-                      style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      introData.length,
+                      _buildDotIndicator,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildDot(int index, int currentPage) {
-    return Container(
-      height: 8,
-      width: currentPage == index ? 24 : 8, // Dot yang aktif lebih panjang
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: currentPage == index ? Colors.blue : Colors.grey, // Warna dot aktif/tidak aktif
-      ),
-    );
-  }
-}
-
-// Widget pembantu untuk setiap halaman intro
-class IntroPage extends StatelessWidget {
-  final String imagePath;
-  final String title;
-  final String description;
-
-  const IntroPage({
-    super.key,
-    required this.imagePath,
-    required this.title,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(40.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            imagePath,
-            height: 250, // Sesuaikan ukuran gambar
-          ),
-          const SizedBox(height: 50),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  if (_currentPage > 0)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _prevPage,
+                        icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF007BFF),
+                          minimumSize: const Size(double.infinity, 60),
+                        ),
+                        label: const Text(
+                          "Back",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  if (_currentPage > 0) const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _nextPage,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF007BFF),
+                        minimumSize: const Size(double.infinity, 60),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _currentPage == introData.length - 1
+                                ? "Get Started"
+                                : "Next",
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            _currentPage == introData.length - 1
+                                ? Icons.check
+                                : Icons.arrow_forward,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[700],
-            ),
-          ),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

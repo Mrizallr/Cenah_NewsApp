@@ -1,3 +1,4 @@
+import 'package:cenah_news/pages/onboarding/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -15,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 2), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const onboardingScreen()),
+        MaterialPageRoute(builder: (context) => const Introductionscreen()),
       );
     });
   }
@@ -28,8 +29,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/images/logo.png', width: 150),
-            const SizedBox(height: 20),
+            Image.asset('assets/images/logo.png', width: 400),
+            const SizedBox(height: 70),
             const CircularProgressIndicator(color: Colors.indigo),
           ],
         ),

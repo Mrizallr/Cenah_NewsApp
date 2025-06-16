@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cenah_news/pages/home/home_screen.dart'; // <-- 1. PASTIKAN IMPORT INI BENAR
 import 'package:flutter/material.dart';
 import 'register_screen.dart';
 
@@ -7,7 +8,7 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
@@ -27,11 +28,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = false);
 
-    ScaffoldMessenger.of(
+    
+    Navigator.pushReplacement(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Login berhasil (simulasi)')));
-
-    // Navigasi ke halaman lain bisa ditambahkan di sini
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+    );
+    // ---------------------------------
   }
 
   @override
@@ -167,20 +169,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child:
-                        _isLoading
-                            ? const CircularProgressIndicator(
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          )
+                        : const Text(
+                            'Masuk',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
                               color: Colors.white,
-                              strokeWidth: 2,
-                            )
-                            : const Text(
-                              'Masuk',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
                             ),
+                          ),
                   ),
                 ),
 
@@ -205,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Google Button
                 _socialButton(
-                  icon: Icons.g_mobiledata,
+                  icon: Icons.g_mobiledata, // Placeholder, ganti jika perlu
                   text: 'Lanjutkan dengan Google',
                   iconColor: Colors.red,
                   onPressed: () {},

@@ -9,16 +9,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // --- Controller untuk Top Headlines ---
+  // --- STATE & CONTROLLERS ---
+
+  /// Controller untuk mengelola posisi scroll pada daftar Top Headlines.
+  /// Diperlukan agar kita bisa mengontrol scroll lewat tombol.
   final ScrollController _headlinesScrollController = ScrollController();
 
-  
+  // --- DATA DUMMY (Contoh Data) ---
+
+  /// Data statis untuk informasi pengguna yang sedang login.
+  /// Nantinya akan diganti dengan data dari database.
   final Map<String, dynamic> userData = {
-    "name": "Zee",
-    "avatarUrl": "assets/images/avatar.png", 
+    "name": "Sarah",
+    "avatarUrl": "assets/images/avatar.png",
   };
 
-  // --- latest news asset ---
+  /// Daftar berita yang akan ditampilkan di bagian "Top Headlines".
   final List<Map<String, dynamic>> topHeadlines = [
     {
       "title": "Resident Evil 9 Dikonfirmasi Akan Segera Rilis Tahun Depan",
@@ -42,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
     },
   ];
 
+  /// Daftar berita yang akan ditampilkan di bagian "Latest News".
   final List<Map<String, dynamic>> latestNews = [
     {
       "title": "Kenaikan Ekonomi Global Mendorong Optimisme Pasar Saham",
@@ -70,30 +77,37 @@ class _HomeScreenState extends State<HomeScreen> {
     },
   ];
 
+  /// Daftar kategori berita yang tersedia.
   final List<String> categories = [
     "All", "Politics", "Technology", "Sports", "Health", "Business", "Entertainment"
   ];
 
+  /// Menyimpan index dari kategori yang sedang aktif/dipilih.
   int _selectedCategoryIndex = 0;
+  
+  /// Menyimpan index dari menu Bottom Navigation Bar yang sedang aktif.
   int _bottomNavIndex = 0;
 
+  /// Metode `dispose` dipanggil saat widget ini dihancurkan.
+  /// Digunakan untuk membersihkan controller agar tidak terjadi memory leak.
   @override
   void dispose() {
-    _headlinesScrollController.dispose(); // Jangan lupa dispose controller
+    _headlinesScrollController.dispose();
     super.dispose();
   }
 
   // --- WIDGET BUILDERS ---
 
-  
+  /// Fungsi ini membangun bagian AppBar (bilah atas) aplikasi.
+  /// Menggunakan [SliverAppBar] agar bisa terintegrasi dengan [CustomScrollView].
+  /// Isinya adalah logo aplikasi, sapaan untuk pengguna, dan avatar pengguna.
   Widget _buildAppBar() {
     return SliverAppBar(
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
-     
-      automaticallyImplyLeading: false, 
+      automaticallyImplyLeading: false, // Menghilangkan tombol back otomatis
       title: Image.asset('assets/images/logo2.png', height: 40),
       actions: [
         Row(
@@ -118,6 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Fungsi ini membangun kolom pencarian (search bar).
+  /// Ditempatkan dalam [SliverToBoxAdapter] agar bisa masuk ke dalam [CustomScrollView].
   Widget _buildSearchBar() {
     return SliverToBoxAdapter(
       child: Padding(
@@ -139,6 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Fungsi ini adalah widget pembantu (helper) untuk membuat judul setiap seksi.
+  /// Contoh: "Top Headlines", "Latest News".
   Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -153,8 +171,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  // --- Scroll Top Headlines dengan Tombol ---
+
+  /// Fungsi ini membangun seksi "Top Headlines".
+  /// Menggunakan [Stack] untuk menumpuk tombol navigasi di atas daftar berita.
+  /// Daftar berita dibangun menggunakan [ListView.builder] dengan scroll horizontal.
   Widget _buildTopHeadlines() {
     return SliverToBoxAdapter(
       child: Stack(
@@ -235,21 +255,23 @@ class _HomeScreenState extends State<HomeScreen> {
           Positioned(
             left: 25,
             child: _buildNavigationButton(Icons.arrow_back_ios_new, () {
-              final newOffset = _headlinesScrollController.offset - (MediaQuery.of(context).size.width * 0.8);
-               if (newOffset >= 0) {
-                 _headlinesScrollController.animateTo(
-                   newOffset,
-                   duration: const Duration(milliseconds: 300),
-                   curve: Curves.easeInOut,
-                 );
-               }
+              final itemWidth = MediaQuery.of(context).size.width * 0.8;
+              final newOffset = _headlinesScrollController.offset - itemWidth;
+              if (newOffset >= 0) {
+                _headlinesScrollController.animateTo(
+                  newOffset,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
             }),
           ),
           Positioned(
             right: 25,
             child: _buildNavigationButton(Icons.arrow_forward_ios, () {
+              final itemWidth = MediaQuery.of(context).size.width * 0.8;
               final maxScroll = _headlinesScrollController.position.maxScrollExtent;
-              final newOffset = _headlinesScrollController.offset + (MediaQuery.of(context).size.width * 0.8);
+              final newOffset = _headlinesScrollController.offset + itemWidth;
               if (newOffset <= maxScroll) {
                 _headlinesScrollController.animateTo(
                   newOffset,
@@ -263,8 +285,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
-  // Widget helper untuk tombol navigasi headline
+
+  /// Widget pembantu untuk membuat tombol navigasi (kiri/kanan) pada Top Headlines.
+  /// Tombol ini semi-transparan dan berbentuk lingkaran.
   Widget _buildNavigationButton(IconData icon, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,
@@ -279,8 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Fungsi ini membangun daftar kategori berita yang bisa di-scroll horizontal.
+  /// Menggunakan [ListView.builder] dan mengubah tampilan kategori yang
+  /// sedang dipilih berdasarkan state [_selectedCategoryIndex].
   Widget _buildCategories() {
-    // ... (tidak ada perubahan di sini)
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 40,
@@ -324,9 +349,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
+  /// Fungsi ini membangun daftar berita vertikal untuk seksi "Latest News".
+  /// Menggunakan [SliverList] dan [SliverChildBuilderDelegate] untuk performa
+  /// yang lebih baik di dalam [CustomScrollView].
   Widget _buildLatestNewsList() {
-    // ... (tidak ada perubahan di sini)
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
@@ -356,8 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
-                         maxLines: 2,
-                         overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -380,7 +407,11 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-  
+
+  /// Fungsi `build` adalah metode utama yang dipanggil untuk merender UI halaman ini.
+  /// Menggunakan [Scaffold] sebagai kerangka utama.
+  /// Isinya adalah [CustomScrollView] yang menampung semua seksi (slivers)
+  /// dan sebuah [BottomNavigationBar] di bagian bawah.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -395,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildCategories(),
           _buildSectionTitle('Latest News'),
           _buildLatestNewsList(),
-           const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

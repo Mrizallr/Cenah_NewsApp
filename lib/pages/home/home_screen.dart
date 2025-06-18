@@ -1,4 +1,5 @@
-import 'package:cenah_news/pages/profile/profile_screen.dart'; // <-- 1. Tambahkan import untuk ProfileScreen
+import 'package:cenah_news/pages/detail/news_detail_screen.dart'; // <-- 1. Import halaman detail
+import 'package:cenah_news/pages/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,19 +16,17 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _bottomNavIndex = 0;
 
-  // --- 2. Daftar semua halaman untuk Bottom Navigation Bar ---
   final List<Widget> _pages = [
-    const HomeFeed(),          // Halaman utama (berita)
-    const CategoriesPage(),    // Halaman placeholder untuk Kategori
-    const SavedPage(),         // Halaman placeholder untuk Artikel Tersimpan
-    const AlertsPage(),        // Halaman placeholder untuk Notifikasi
-    const ProfileScreen(),     // Halaman Profil yang sudah kita buat
+    const HomeFeed(),
+    const CategoriesPage(),
+    const SavedPage(),
+    const AlertsPage(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // --- 3. Body sekarang menampilkan halaman sesuai index yang aktif ---
       body: _pages[_bottomNavIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _bottomNavIndex,
@@ -52,10 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-
 // -----------------------------------------------------------------------------
 // KONTEN HALAMAN HOME (NEWS FEED)
-// Semua UI untuk berita dipindahkan ke sini agar rapi.
 // -----------------------------------------------------------------------------
 class HomeFeed extends StatefulWidget {
   const HomeFeed({super.key});
@@ -67,29 +64,24 @@ class HomeFeed extends StatefulWidget {
 class _HomeFeedState extends State<HomeFeed> {
   final ScrollController _headlinesScrollController = ScrollController();
 
-  final Map<String, dynamic> userData = const {
-    "name": "Sarah",
-    "avatarUrl": "assets/images/avatar.png",
-  };
-
+  // --- DATA DUMMY (Nantinya akan diganti dari Firebase) ---
+  final Map<String, dynamic> userData = const {"name": "Sarah", "avatarUrl": "assets/images/avatar.png"};
   final List<Map<String, dynamic>> topHeadlines = const [
-    { "title": "Resident Evil 9 Dikonfirmasi Akan Segera Rilis Tahun Depan", "time": "2 jam lalu", "imageUrl": "assets/images/headline_1.png" },
-    { "title": "Timnas Indonesia Lolos ke Putaran Tiga Kualifikasi Piala Dunia", "time": "4 jam lalu", "imageUrl": "assets/images/headline_2.png" },
-    { "title": "Dedi Mulyadi Usul Barak Militer Jadi Solusi Atasi Geng Motor", "time": "8 jam lalu", "imageUrl": "assets/images/headline_3.png" },
-    { "title": "Israel Melancarkan Serangan Udara Balasan ke Wilayah Iran", "time": "1 hari lalu", "imageUrl": "assets/images/headline_4.png" },
+    {"title": "Resident Evil 9 Dikonfirmasi Akan Segera Rilis Tahun Depan", "time": "2 jam lalu", "imageUrl": "assets/images/headline_1.png", "category": "Teknologi", "author": "Gamespot", "content": "Capcom secara resmi mengumumkan kehadiran Resident Evil 9. Game ini dijadwalkan akan meluncur pada kuartal ketiga tahun depan dengan membawa kembali karakter ikonik dan gameplay yang lebih mencekam."},
+    {"title": "Timnas Indonesia Lolos ke Putaran Tiga Kualifikasi Piala Dunia", "time": "4 jam lalu", "imageUrl": "assets/images/headline_2.png", "category": "Olahraga", "author": "PSSI", "content": "Timnas Indonesia berhasil memastikan satu tempat di putaran ketiga Kualifikasi Piala Dunia 2026 zona Asia setelah mengalahkan Filipina dengan skor 2-0 di Stadion Utama Gelora Bung Karno."},
+    {"title": "Dedi Mulyadi Usul Barak Militer Jadi Solusi Atasi Geng Motor", "time": "8 jam lalu", "imageUrl": "assets/images/headline_3.png", "category": "Politik", "author": "Jabar News", "content": "Calon Gubernur Jawa Barat, Dedi Mulyadi, mengusulkan solusi kontroversial untuk mengatasi maraknya geng motor dengan memasukkan anggotanya ke dalam barak militer untuk pembinaan disiplin."},
+    {"title": "Israel Melancarkan Serangan Udara Balasan ke Wilayah Iran", "time": "1 hari lalu", "imageUrl": "assets/images/headline_4.png", "category": "Internasional", "author": "Reuters", "content": "Ketegangan di Timur Tengah kembali memanas setelah Israel dilaporkan melancarkan serangan udara balasan ke beberapa lokasi strategis di wilayah Iran. Komunitas internasional menyerukan de-eskalasi."},
   ];
-
   final List<Map<String, dynamic>> latestNews = const [
-    { "title": "Kenaikan Ekonomi Global Mendorong Optimisme Pasar Saham", "snippet": "Dana Moneter Internasional (IMF) merevisi...", "imageUrl": "assets/images/latest_1.png" },
-    { "title": "Waspada, Kasus COVID-19 Varian Baru Mulai Meningkat di Indonesia", "snippet": "Kementerian Kesehatan mengimbau masyarakat untuk...", "imageUrl": "assets/images/latest_2.png" },
-    { "title": "Kabar Duka, Musisi Bertalenta Gustiwiw Meninggal Dunia", "snippet": "Dunia musik tanah air berduka atas kepergian...", "imageUrl": "assets/images/latest_3.png" },
-    { "title": "Manfaat Kopi Tanpa Gula Menurut dr. Tirta untuk Kesehatan", "snippet": "Dalam sebuah unggahan edukatif, dr. Tirta...", "imageUrl": "assets/images/latest_4.png" },
-    { "title": "Ujian Nasional SMA Diubah Menjadi Tes Kemampuan Akademik (TKA)", "snippet": "Nadiem Makarim mengumumkan perubahan besar dalam...", "imageUrl": "assets/images/latest_5.png" },
+    {"title": "Kenaikan Ekonomi Global Mendorong Optimisme Pasar Saham", "snippet": "Dana Moneter Internasional (IMF) merevisi...", "imageUrl": "assets/images/latest_1.png", "category": "Bisnis", "time": "3 jam lalu"},
+    {"title": "Waspada, Kasus COVID-19 Varian Baru Mulai Meningkat di Indonesia", "snippet": "Kementerian Kesehatan mengimbau masyarakat untuk...", "imageUrl": "assets/images/latest_2.png", "category": "Kesehatan", "time": "5 jam lalu"},
+    {"title": "Kabar Duka, Musisi Bertalenta Gustiwiw Meninggal Dunia", "snippet": "Dunia musik tanah air berduka atas kepergian...", "imageUrl": "assets/images/latest_3.png", "category": "Hiburan", "time": "9 jam lalu"},
+    {"title": "Manfaat Kopi Tanpa Gula Menurut dr. Tirta untuk Kesehatan", "snippet": "Dalam sebuah unggahan edukatif, dr. Tirta...", "imageUrl": "assets/images/latest_4.png", "category": "Kesehatan", "time": "1 hari lalu"},
+    {"title": "Ujian Nasional SMA Diubah Menjadi Tes Kemampuan Akademik (TKA)", "snippet": "Nadiem Makarim mengumumkan perubahan besar dalam...", "imageUrl": "assets/images/latest_5.png", "category": "Pendidikan", "time": "2 hari lalu"},
   ];
-
-  final List<String> categories = const [ "All", "Politics", "Technology", "Sports", "Health", "Business", "Entertainment" ];
+  final List<String> categories = const ["All", "Politics", "Technology", "Sports", "Health", "Business", "Entertainment"];
   int _selectedCategoryIndex = 0;
-  
+
   @override
   void dispose() {
     _headlinesScrollController.dispose();
@@ -116,20 +108,31 @@ class _HomeFeedState extends State<HomeFeed> {
     );
   }
 
-  // --- Semua Widget Helper untuk HomeFeed ada di sini ---
+  // --- Widget Helper untuk HomeFeed ---
+
   Widget _buildAppBar() {
     return SliverAppBar(
       systemOverlayStyle: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.dark, statusBarBrightness: Brightness.light),
       automaticallyImplyLeading: false,
       title: Image.asset('assets/images/logo2.png', height: 40),
       actions: [
-        Row(children: [ Text('Hello, ${userData["name"]}', style: const TextStyle(fontSize: 14, color: Colors.black54)), const SizedBox(width: 8), CircleAvatar(backgroundImage: AssetImage(userData["avatarUrl"]!), radius: 20), const SizedBox(width: 16) ]),
+        Row(
+          children: [
+            Text('Hello, ${userData["name"]}', style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            const SizedBox(width: 8),
+            CircleAvatar(backgroundImage: AssetImage(userData["avatarUrl"]!), radius: 20),
+            const SizedBox(width: 16),
+          ],
+        ),
       ],
-      backgroundColor: Colors.white, floating: true, pinned: true, elevation: 0,
+      backgroundColor: Colors.white,
+      floating: true,
+      pinned: true,
+      elevation: 0,
     );
   }
 
-  Widget _buildSearchBar() { /* ... Implementasi Search Bar ... */ 
+  Widget _buildSearchBar() {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -140,23 +143,29 @@ class _HomeFeedState extends State<HomeFeed> {
             filled: true,
             fillColor: Colors.grey[200],
             contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
         ),
       ),
     );
   }
-  
-  Widget _buildSectionTitle(String title) { /* ... Implementasi Section Title ... */ 
+
+  Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        child: Text(
+          title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
-  
-  Widget _buildTopHeadlines() { /* ... Implementasi Top Headlines ... */ 
+
+  Widget _buildTopHeadlines() {
     return SliverToBoxAdapter(
       child: Stack(
         alignment: Alignment.center,
@@ -167,31 +176,63 @@ class _HomeFeedState extends State<HomeFeed> {
               controller: _headlinesScrollController,
               scrollDirection: Axis.horizontal,
               itemCount: topHeadlines.length,
-              itemBuilder: (context, index) { /* ... Card Headline ... */ 
+              itemBuilder: (context, index) {
                 final headline = topHeadlines[index];
-                return Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  margin: EdgeInsets.only(left: 16, right: index == topHeadlines.length - 1 ? 16 : 0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(image: AssetImage(headline["imageUrl"]), fit: BoxFit.cover),
-                  ),
-                  child: Stack(children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black.withOpacity(0.8), Colors.transparent]),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NewsDetailScreen(newsData: headline),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    margin: EdgeInsets.only(left: 16, right: index == topHeadlines.length - 1 ? 16 : 0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: AssetImage(headline["imageUrl"]),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    Positioned(
-                      bottom: 16, left: 16, right: 16,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(headline["title"], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 8),
-                        Text(headline["time"], style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                      ]),
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 16,
+                          left: 16,
+                          right: 16,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                headline["title"],
+                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                headline["time"],
+                                style: const TextStyle(color: Colors.white70, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ]),
+                  ),
                 );
               },
             ),
@@ -201,7 +242,11 @@ class _HomeFeedState extends State<HomeFeed> {
             child: _buildNavigationButton(Icons.arrow_back_ios_new, () {
               final itemWidth = MediaQuery.of(context).size.width * 0.8;
               if (_headlinesScrollController.offset > 0) {
-                _headlinesScrollController.animateTo(_headlinesScrollController.offset - itemWidth, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                _headlinesScrollController.animateTo(
+                  _headlinesScrollController.offset - itemWidth,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
               }
             }),
           ),
@@ -210,7 +255,11 @@ class _HomeFeedState extends State<HomeFeed> {
             child: _buildNavigationButton(Icons.arrow_forward_ios, () {
               final itemWidth = MediaQuery.of(context).size.width * 0.8;
               if (_headlinesScrollController.offset < _headlinesScrollController.position.maxScrollExtent) {
-                _headlinesScrollController.animateTo(_headlinesScrollController.offset + itemWidth, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                _headlinesScrollController.animateTo(
+                  _headlinesScrollController.offset + itemWidth,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
               }
             }),
           ),
@@ -218,19 +267,22 @@ class _HomeFeedState extends State<HomeFeed> {
       ),
     );
   }
-  
-  Widget _buildNavigationButton(IconData icon, VoidCallback onPressed) { /* ... Implementasi Tombol Navigasi ... */ 
+
+  Widget _buildNavigationButton(IconData icon, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), shape: BoxShape.circle),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.4),
+          shape: BoxShape.circle,
+        ),
         child: Icon(icon, color: Colors.white, size: 20),
       ),
     );
   }
-  
-  Widget _buildCategories() { /* ... Implementasi Categories ... */ 
+
+  Widget _buildCategories() {
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 40,
@@ -247,7 +299,15 @@ class _HomeFeedState extends State<HomeFeed> {
                   color: _selectedCategoryIndex == index ? Colors.blue[600] : Colors.grey[200],
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Center(child: Text(categories[index], style: TextStyle(color: _selectedCategoryIndex == index ? Colors.white : Colors.black54, fontWeight: FontWeight.w600))),
+                child: Center(
+                  child: Text(
+                    categories[index],
+                    style: TextStyle(
+                      color: _selectedCategoryIndex == index ? Colors.white : Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             );
           },
@@ -255,25 +315,54 @@ class _HomeFeedState extends State<HomeFeed> {
       ),
     );
   }
-  
-  Widget _buildLatestNewsList() { /* ... Implementasi Latest News ... */ 
+
+  Widget _buildLatestNewsList() {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final news = latestNews[index];
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.asset(news["imageUrl"], width: 110, height: 90, fit: BoxFit.cover)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(news["title"], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Text(news["snippet"], style: const TextStyle(color: Colors.grey, fontSize: 14), maxLines: 2, overflow: TextOverflow.ellipsis),
-                ]),
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NewsDetailScreen(newsData: news),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(news["imageUrl"], width: 110, height: 90, fit: BoxFit.cover),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          news["title"],
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          news["snippet"],
+                          style: const TextStyle(color: Colors.grey, fontSize: 14),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ]),
+            ),
           );
         },
         childCount: latestNews.length,
@@ -290,7 +379,10 @@ class CategoriesPage extends StatelessWidget {
   const CategoriesPage({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Kategori')), body: const Center(child: Text('Halaman Kategori')));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Kategori')),
+      body: const Center(child: Text('Halaman Kategori')),
+    );
   }
 }
 
@@ -298,7 +390,10 @@ class SavedPage extends StatelessWidget {
   const SavedPage({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Artikel Tersimpan')), body: const Center(child: Text('Halaman Artikel Tersimpan')));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Artikel Tersimpan')),
+      body: const Center(child: Text('Halaman Artikel Tersimpan')),
+    );
   }
 }
 
@@ -306,6 +401,9 @@ class AlertsPage extends StatelessWidget {
   const AlertsPage({super.key});
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const Text('Notifikasi')), body: const Center(child: Text('Halaman Notifikasi')));
+    return Scaffold(
+      appBar: AppBar(title: const Text('Notifikasi')),
+      body: const Center(child: Text('Halaman Notifikasi')),
+    );
   }
 }

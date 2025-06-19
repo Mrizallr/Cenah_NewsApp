@@ -1,112 +1,180 @@
 import 'package:flutter/material.dart';
+import 'package:cenah_news/src/configs/app_routes.dart';
+import 'package:cenah_news/src/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
-  /// --- Data Dummy ---
-  /// Data ini nantinya akan diambil dari state management atau database.
-  final Map<String, String> userData = const {
-    'name': 'Sarah',
-    'email': 'sarah.doe@email.com',
-    'avatarUrl': 'assets/images/avatar.png', // Pastikan aset ini ada
-  };
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-  /// --- Fungsi untuk Dialog Konfirmasi Logout ---
-  void _showLogoutConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Keluar Akun'),
-          content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Tutup dialog
-              },
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.currentUser;
+    final isAuthenticated = authProvider.isAuthenticated;
+    final isLoading = authProvider.isLoading;
+
+    if (!isAuthenticated) {
+      return _buildUnauthenticatedView();
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        title: const Text(
+          'Profil',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () {
+              // Implementasi pengaturan
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur pengaturan akan segera hadir!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            // Refresh user data if needed
+            // await authProvider.refreshUserData();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  _buildProfileCard(context, user),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Aktivitas Saya'),
+                  const SizedBox(height: 16),
+                  _buildActivityOptions(context),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle('Pengaturan'),
+                  const SizedBox(height: 16),
+                  _buildSettingsOptions(context),
+                  const SizedBox(height: 24),
+                  _buildLogoutButton(context, isLoading),
+                  const SizedBox(height: 32),
+                ],
+              ),
             ),
-            TextButton(
-              child: Text('Keluar', style: TextStyle(color: Colors.red[600])),
-              onPressed: () {
-                // TODO: Tambahkan logika logout di sini (misal: hapus token, panggil API)
-                Navigator.of(dialogContext).pop(); // Tutup dialog
-                // Navigator.of(context).pushAndRemoveUntil( ... ke halaman login);
-              },
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildUnauthenticatedView() {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Profil Saya'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.account_circle_outlined,
+              size: 80,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Anda belum login',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Silakan login untuk mengakses profil Anda',
+              style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Login', style: TextStyle(fontSize: 16)),
+            ),
+          ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // --- Bagian Header Pengguna ---
-            _buildProfileHeader(),
-            const SizedBox(height: 32),
-            
-            // --- Grup Menu: Manajemen Akun ---
-            _buildMenuGroup(
-              context: context,
-              title: 'Manajemen Akun',
-              items: [
-                _buildProfileMenuItem(
-                  icon: Icons.bookmark_border,
-                  title: 'Artikel Tersimpan',
-                  onTap: () {
-                    // TODO: Navigasi ke halaman artikel tersimpan
-                  },
-                ),
-                _buildProfileMenuItem(
-                  icon: Icons.edit_outlined,
-                  title: 'Edit Profil',
-                  onTap: () {
-                    // TODO: Navigasi ke halaman edit profil
-                  },
-                ),
-                _buildProfileMenuItem(
-                  icon: Icons.lock_outline,
-                  title: 'Ubah Kata Sandi',
-                  onTap: () {
-                    // TODO: Navigasi ke halaman ubah kata sandi
-                  },
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 32),
+    );
+  }
 
-            // --- Tombol Keluar ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: _buildProfileMenuItem(
-                icon: Icons.logout,
-                title: 'Keluar',
-                textColor: Colors.red[600],
-                onTap: () {
-                  _showLogoutConfirmationDialog(context);
-                },
-                hideArrow: true, // Sembunyikan panah untuk item ini
+  Widget _buildProfileCard(BuildContext context, user) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 40,
+              backgroundColor: primaryColor.withValues(alpha: 0.1),
+              backgroundImage:
+                  user?.avatar != null && user!.avatar.isNotEmpty
+                      ? NetworkImage(user.avatar)
+                      : null,
+              child:
+                  user?.avatar == null || user!.avatar.isEmpty
+                      ? Icon(Icons.person, size: 40, color: primaryColor)
+                      : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user?.name ?? 'Nama Pengguna',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    user?.email ?? 'email@example.com',
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    user?.title ?? 'Pembaca Berita',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: primaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -115,91 +183,134 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Widget untuk membangun header profil (avatar, nama, email).
-  Widget _buildProfileHeader() {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundImage: AssetImage(userData['avatarUrl']!),
-          backgroundColor: Colors.grey[300],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          userData['name']!,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          userData['email']!,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
     );
   }
 
-  /// Widget untuk membangun satu grup menu.
-  Widget _buildMenuGroup({
-    required BuildContext context,
-    required String title,
-    required List<Widget> items,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  Widget _buildActivityOptions(BuildContext context) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              letterSpacing: 0.5,
-            ),
+          _buildOptionTile(context, 'Artikel Saya', Icons.article_outlined, () {
+            Navigator.pushNamed(context, '/my-articles');
+          }),
+          const Divider(height: 1),
+          _buildOptionTile(
+            context,
+            'Artikel Tersimpan',
+            Icons.bookmark_outline,
+            () {
+              Navigator.pushNamed(context, '/saved');
+            },
           ),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: items,
-            ),
+          const Divider(height: 1),
+          _buildOptionTile(
+            context,
+            'Riwayat Bacaan',
+            Icons.history_outlined,
+            () {
+              // Navigate to reading history
+            },
           ),
         ],
       ),
     );
   }
 
-  /// Widget untuk membangun satu item di dalam menu profil.
-  Widget _buildProfileMenuItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? textColor,
-    bool hideArrow = false,
-  }) {
+  Widget _buildSettingsOptions(BuildContext context) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        children: [
+          _buildOptionTile(
+            context,
+            'Pengaturan Akun',
+            Icons.settings_outlined,
+            () {
+              // Navigate to account settings
+            },
+          ),
+          const Divider(height: 1),
+          _buildOptionTile(
+            context,
+            'Notifikasi',
+            Icons.notifications_outlined,
+            () {
+              // Navigate to notifications settings
+            },
+          ),
+          const Divider(height: 1),
+          _buildOptionTile(
+            context,
+            'Bantuan & Dukungan',
+            Icons.help_outline,
+            () {
+              // Navigate to help & support
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOptionTile(
+    BuildContext context,
+    String title,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return ListTile(
-      leading: Icon(icon, color: textColor ?? Colors.grey[800]),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: textColor ?? Colors.black87,
+      leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+      title: Text(title),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildLogoutButton(BuildContext context, bool isLoading) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed:
+            isLoading
+                ? null
+                : () async {
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+                  await authProvider.logout();
+                  if (context.mounted) {
+                    Navigator.pushReplacementNamed(context, AppRoutes.login);
+                  }
+                },
+        icon:
+            isLoading
+                ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                )
+                : const Icon(Icons.logout),
+        label: Text(isLoading ? 'Sedang Keluar...' : 'Keluar'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red.shade600,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
-      trailing: hideArrow
-          ? null
-          : const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-      onTap: onTap,
     );
   }
 }

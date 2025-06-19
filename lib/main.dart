@@ -42,7 +42,7 @@ class _MyAppState extends State<MyApp> {
           splitScreenMode: true,
           builder: (_, child) {
             return MaterialApp(
-              title: 'Kelompok 1',
+              title: 'Cenah News',
               debugShowCheckedModeBanner: false,
               initialRoute: AppRoutes.splash,
               onGenerateRoute: AppRoutes.generateRoute,

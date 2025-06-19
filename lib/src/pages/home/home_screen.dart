@@ -1,7 +1,11 @@
-import 'package:cenah_news/src/pages/detail/news_detail_screen.dart'; // <-- 1. Import halaman detail
+import 'package:cenah_news/src/models/news_model.dart';
+import 'package:cenah_news/src/services/news_services.dart'; // <-- 2. Import service
+import 'package:cenah_news/src/pages/detail/news_detail_screen.dart';
 import 'package:cenah_news/src/pages/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// Disarankan untuk menambahkan package 'timeago' untuk format waktu yang lebih baik
+// import 'package:timeago/timeago.dart' as timeago;
 
 // -----------------------------------------------------------------------------
 // WIDGET UTAMA: Pengontrol Halaman (Page Controller)
@@ -16,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _bottomNavIndex = 0;
 
+  // Daftar halaman tetap sama
   final List<Widget> _pages = [
     const HomeFeed(),
     const CategoriesPage(),
@@ -69,98 +74,79 @@ class HomeFeed extends StatefulWidget {
 
 class _HomeFeedState extends State<HomeFeed> {
   final ScrollController _headlinesScrollController = ScrollController();
+  final NewsService _newsService =
+      NewsService(); // <-- 3. Inisialisasi NewsService
 
-  // --- DATA DUMMY (Nantinya akan diganti dari Firebase) ---
+  // --- State untuk menampung data dari API ---
+  List<NewsArticle> _topHeadlines = [];
+  List<NewsArticle> _latestNews = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // --- DATA DUMMY (Hanya untuk User, karena tidak ada di API) ---
   final Map<String, dynamic> userData = const {
     "name": "Sarah",
     "avatarUrl": "assets/images/avatar.png",
   };
-  final List<Map<String, dynamic>> topHeadlines = const [
-    {
-      "title": "Resident Evil 9 Dikonfirmasi Akan Segera Rilis Tahun Depan",
-      "time": "2 jam lalu",
-      "imageUrl": "assets/images/headline_1.png",
-      "category": "Teknologi",
-      "author": "Gamespot",
-      "content":
-          "Capcom secara resmi mengumumkan kehadiran Resident Evil 9. Game ini dijadwalkan akan meluncur pada kuartal ketiga tahun depan dengan membawa kembali karakter ikonik dan gameplay yang lebih mencekam.",
-    },
-    {
-      "title": "Timnas Indonesia Lolos ke Putaran Tiga Kualifikasi Piala Dunia",
-      "time": "4 jam lalu",
-      "imageUrl": "assets/images/headline_2.png",
-      "category": "Olahraga",
-      "author": "PSSI",
-      "content":
-          "Timnas Indonesia berhasil memastikan satu tempat di putaran ketiga Kualifikasi Piala Dunia 2026 zona Asia setelah mengalahkan Filipina dengan skor 2-0 di Stadion Utama Gelora Bung Karno.",
-    },
-    {
-      "title": "Dedi Mulyadi Usul Barak Militer Jadi Solusi Atasi Geng Motor",
-      "time": "8 jam lalu",
-      "imageUrl": "assets/images/headline_3.png",
-      "category": "Politik",
-      "author": "Jabar News",
-      "content":
-          "Calon Gubernur Jawa Barat, Dedi Mulyadi, mengusulkan solusi kontroversial untuk mengatasi maraknya geng motor dengan memasukkan anggotanya ke dalam barak militer untuk pembinaan disiplin.",
-    },
-    {
-      "title": "Israel Melancarkan Serangan Udara Balasan ke Wilayah Iran",
-      "time": "1 hari lalu",
-      "imageUrl": "assets/images/headline_4.png",
-      "category": "Internasional",
-      "author": "Reuters",
-      "content":
-          "Ketegangan di Timur Tengah kembali memanas setelah Israel dilaporkan melancarkan serangan udara balasan ke beberapa lokasi strategis di wilayah Iran. Komunitas internasional menyerukan de-eskalasi.",
-    },
-  ];
-  final List<Map<String, dynamic>> latestNews = const [
-    {
-      "title": "Kenaikan Ekonomi Global Mendorong Optimisme Pasar Saham",
-      "snippet": "Dana Moneter Internasional (IMF) merevisi...",
-      "imageUrl": "assets/images/latest_1.png",
-      "category": "Bisnis",
-      "time": "3 jam lalu",
-    },
-    {
-      "title":
-          "Waspada, Kasus COVID-19 Varian Baru Mulai Meningkat di Indonesia",
-      "snippet": "Kementerian Kesehatan mengimbau masyarakat untuk...",
-      "imageUrl": "assets/images/latest_2.png",
-      "category": "Kesehatan",
-      "time": "5 jam lalu",
-    },
-    {
-      "title": "Kabar Duka, Musisi Bertalenta Gustiwiw Meninggal Dunia",
-      "snippet": "Dunia musik tanah air berduka atas kepergian...",
-      "imageUrl": "assets/images/latest_3.png",
-      "category": "Hiburan",
-      "time": "9 jam lalu",
-    },
-    {
-      "title": "Manfaat Kopi Tanpa Gula Menurut dr. Tirta untuk Kesehatan",
-      "snippet": "Dalam sebuah unggahan edukatif, dr. Tirta...",
-      "imageUrl": "assets/images/latest_4.png",
-      "category": "Kesehatan",
-      "time": "1 hari lalu",
-    },
-    {
-      "title": "Ujian Nasional SMA Diubah Menjadi Tes Kemampuan Akademik (TKA)",
-      "snippet": "Nadiem Makarim mengumumkan perubahan besar dalam...",
-      "imageUrl": "assets/images/latest_5.png",
-      "category": "Pendidikan",
-      "time": "2 hari lalu",
-    },
-  ];
+
+  // --- Kategori tetap, bisa juga diambil dari API jika tersedia ---
   final List<String> categories = const [
     "All",
-    "Politics",
     "Technology",
     "Sports",
     "Health",
     "Business",
     "Entertainment",
+    "Politics",
   ];
   int _selectedCategoryIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // 4. Panggil fungsi untuk mengambil data saat halaman pertama kali dimuat
+    _fetchNewsData();
+  }
+
+  // --- 5. Fungsi untuk mengambil dan memproses data berita dari API ---
+  Future<void> _fetchNewsData({String? category}) async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      String apiUrl = '${_newsService.baseApiUrl}/news';
+      if (category != null && category != 'All') {
+        apiUrl += '?category=$category';
+      }
+
+      final newsResponse = await _newsService.fetchNews(apiUrl);
+
+      setState(() {
+        if (newsResponse.success) {
+          final allArticles = newsResponse.data.articles;
+          // Pisahkan antara berita trending (untuk top headlines) dan lainnya
+          _topHeadlines = allArticles.where((a) => a.isTrending).toList();
+          _latestNews = allArticles; // Tampilkan semua di latest news
+
+          // Jika ada filter kategori, sembunyikan top headlines dan tampilkan semua di latest
+          if (category != null && category != 'All') {
+            _topHeadlines = [];
+            _latestNews = allArticles;
+          }
+        } else {
+          _errorMessage = newsResponse.message;
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString().replaceFirst("Exception: ", "");
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -172,25 +158,53 @@ class _HomeFeedState extends State<HomeFeed> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          _buildSearchBar(),
-          _buildSectionTitle('Top Headlines'),
-          _buildTopHeadlines(),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          _buildCategories(),
-          _buildSectionTitle('Latest News'),
-          _buildLatestNewsList(),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
-      ),
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(),
+              ) // Tampilkan loading
+              : _errorMessage != null
+              ? Center(child: Text('Error: $_errorMessage')) // Tampilkan error
+              : RefreshIndicator(
+                onRefresh:
+                    () => _fetchNewsData(
+                      category: categories[_selectedCategoryIndex],
+                    ),
+                child: CustomScrollView(
+                  slivers: [
+                    _buildAppBar(),
+                    _buildSearchBar(),
+                    // Tampilkan Top Headlines hanya jika tidak ada kategori yang dipilih
+                    if (_selectedCategoryIndex == 0 &&
+                        _topHeadlines.isNotEmpty) ...[
+                      _buildSectionTitle('Top Headlines'),
+                      _buildTopHeadlines(),
+                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    ],
+                    _buildCategories(),
+                    _buildSectionTitle('Latest News'),
+                    _latestNews.isEmpty
+                        ? SliverToBoxAdapter(
+                          child: Container(
+                            height: 200,
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Tidak ada berita untuk kategori ini.',
+                            ),
+                          ),
+                        )
+                        : _buildLatestNewsList(),
+                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  ],
+                ),
+              ),
     );
   }
 
-  // --- Widget Helper untuk HomeFeed ---
+  // --- Widget Helper untuk HomeFeed (Beberapa bagian dimodifikasi) ---
 
   Widget _buildAppBar() {
+    // Tidak ada perubahan signifikan di sini
     return SliverAppBar(
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarIconBrightness: Brightness.dark,
@@ -222,6 +236,7 @@ class _HomeFeedState extends State<HomeFeed> {
   }
 
   Widget _buildSearchBar() {
+    // Tidak ada perubahan di sini
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -243,6 +258,7 @@ class _HomeFeedState extends State<HomeFeed> {
   }
 
   Widget _buildSectionTitle(String title) {
+    // Tidak ada perubahan di sini
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -254,6 +270,7 @@ class _HomeFeedState extends State<HomeFeed> {
     );
   }
 
+  // --- 6. MODIFIKASI: _buildTopHeadlines menggunakan data API ---
   Widget _buildTopHeadlines() {
     return SliverToBoxAdapter(
       child: Stack(
@@ -264,16 +281,18 @@ class _HomeFeedState extends State<HomeFeed> {
             child: ListView.builder(
               controller: _headlinesScrollController,
               scrollDirection: Axis.horizontal,
-              itemCount: topHeadlines.length,
+              itemCount: _topHeadlines.length,
               itemBuilder: (context, index) {
-                final headline = topHeadlines[index];
+                final headline = _topHeadlines[index];
                 return GestureDetector(
                   onTap: () {
+                    // Kirim objek NewsArticle ke halaman detail
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => NewsDetailScreen(newsData: headline),
+                            (context) =>
+                                NewsDetailScreen(newsArticle: headline),
                       ),
                     );
                   },
@@ -281,13 +300,16 @@ class _HomeFeedState extends State<HomeFeed> {
                     width: MediaQuery.of(context).size.width * 0.8,
                     margin: EdgeInsets.only(
                       left: 16,
-                      right: index == topHeadlines.length - 1 ? 16 : 0,
+                      right: index == _topHeadlines.length - 1 ? 16 : 0,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
+                      // Gunakan Image.network untuk memuat dari URL
                       image: DecorationImage(
-                        image: AssetImage(headline["imageUrl"]),
+                        image: NetworkImage(headline.imageUrl),
                         fit: BoxFit.cover,
+                        onError:
+                            (exception, stackTrace) => const Icon(Icons.error),
                       ),
                     ),
                     child: Stack(
@@ -313,7 +335,7 @@ class _HomeFeedState extends State<HomeFeed> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                headline["title"],
+                                headline.title, // <-- Data dari API
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -324,7 +346,9 @@ class _HomeFeedState extends State<HomeFeed> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                headline["time"],
+                                headline.publishedAt, // <-- Data dari API
+                                // Anda bisa menggunakan package 'timeago' untuk format seperti "2 hours ago"
+                                // contoh: timeago.format(headline.createdAt)
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
@@ -343,6 +367,7 @@ class _HomeFeedState extends State<HomeFeed> {
           Positioned(
             left: 25,
             child: _buildNavigationButton(Icons.arrow_back_ios_new, () {
+              // Logika navigasi scroll tetap sama
               final itemWidth = MediaQuery.of(context).size.width * 0.8;
               if (_headlinesScrollController.offset > 0) {
                 _headlinesScrollController.animateTo(
@@ -356,6 +381,7 @@ class _HomeFeedState extends State<HomeFeed> {
           Positioned(
             right: 25,
             child: _buildNavigationButton(Icons.arrow_forward_ios, () {
+              // Logika navigasi scroll tetap sama
               final itemWidth = MediaQuery.of(context).size.width * 0.8;
               if (_headlinesScrollController.offset <
                   _headlinesScrollController.position.maxScrollExtent) {
@@ -373,6 +399,7 @@ class _HomeFeedState extends State<HomeFeed> {
   }
 
   Widget _buildNavigationButton(IconData icon, VoidCallback onPressed) {
+    // Tidak ada perubahan di sini
     return GestureDetector(
       onTap: onPressed,
       child: Container(
@@ -386,6 +413,7 @@ class _HomeFeedState extends State<HomeFeed> {
     );
   }
 
+  // --- 7. MODIFIKASI: _buildCategories untuk memicu fetch data baru ---
   Widget _buildCategories() {
     return SliverToBoxAdapter(
       child: SizedBox(
@@ -395,7 +423,11 @@ class _HomeFeedState extends State<HomeFeed> {
           itemCount: categories.length,
           itemBuilder: (context, index) {
             return GestureDetector(
-              onTap: () => setState(() => _selectedCategoryIndex = index),
+              onTap: () {
+                setState(() => _selectedCategoryIndex = index);
+                // Panggil fetch data lagi dengan kategori yang dipilih
+                _fetchNewsData(category: categories[index]);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -432,16 +464,18 @@ class _HomeFeedState extends State<HomeFeed> {
     );
   }
 
+  // --- 8. MODIFIKASI: _buildLatestNewsList menggunakan data API ---
   Widget _buildLatestNewsList() {
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        final news = latestNews[index];
+        final news = _latestNews[index];
         return GestureDetector(
           onTap: () {
+            // Kirim objek NewsArticle ke halaman detail
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NewsDetailScreen(newsData: news),
+                builder: (context) => NewsDetailScreen(newsArticle: news),
               ),
             );
           },
@@ -452,11 +486,24 @@ class _HomeFeedState extends State<HomeFeed> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    news["imageUrl"],
+                  // Gunakan Image.network untuk memuat dari URL
+                  child: Image.network(
+                    news.imageUrl,
                     width: 110,
                     height: 90,
                     fit: BoxFit.cover,
+                    // Tambahkan error builder untuk menangani jika gambar gagal dimuat
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 110,
+                        height: 90,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -465,7 +512,7 @@ class _HomeFeedState extends State<HomeFeed> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        news["title"],
+                        news.title, // <-- Data dari API
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -475,7 +522,7 @@ class _HomeFeedState extends State<HomeFeed> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        news["snippet"],
+                        news.content, // <-- Data dari API (gunakan content sebagai snippet)
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 14,
@@ -490,13 +537,13 @@ class _HomeFeedState extends State<HomeFeed> {
             ),
           ),
         );
-      }, childCount: latestNews.length),
+      }, childCount: _latestNews.length),
     );
   }
 }
 
 // -----------------------------------------------------------------------------
-// HALAMAN PLACEHOLDER (SEMENTARA)
+// HALAMAN PLACEHOLDER (Tidak ada perubahan)
 // -----------------------------------------------------------------------------
 
 class CategoriesPage extends StatelessWidget {

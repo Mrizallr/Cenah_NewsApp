@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cenah_news/src/configs/app_routes.dart';
 import 'package:cenah_news/src/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
+// Import halaman SavedArticlesScreen yang baru
+import 'package:cenah_news/src/pages/saved/saved_articles_screen.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -136,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: primaryColor.withValues(alpha: 0.1),
+              backgroundColor: primaryColor.withOpacity(0.1), // Fixed type error with .withValues()
               backgroundImage:
                   user?.avatar != null && user!.avatar.isNotEmpty
                       ? NetworkImage(user.avatar)
@@ -197,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildOptionTile(context, 'Artikel Saya', Icons.article_outlined, () {
-            Navigator.pushNamed(context, '/my-articles');
+            Navigator.pushNamed(context, AppRoutes.myArticles); // Menggunakan rute yang didefinisikan
           }),
           const Divider(height: 1),
           _buildOptionTile(
@@ -205,7 +207,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Artikel Tersimpan',
             Icons.bookmark_outline,
             () {
-              Navigator.pushNamed(context, '/saved');
+              // Navigasi ke SavedArticlesScreen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SavedArticlesScreen()),
+              );
             },
           ),
           const Divider(height: 1),
@@ -214,7 +220,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Riwayat Bacaan',
             Icons.history_outlined,
             () {
-              // Navigate to reading history
+              // Implementasi navigasi ke riwayat bacaan
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur riwayat bacaan akan segera hadir!'),
+                  duration: Duration(seconds: 2), // Perbaikan di sini
+                ),
+              );
             },
           ),
         ],
@@ -233,7 +245,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Pengaturan Akun',
             Icons.settings_outlined,
             () {
-              // Navigate to account settings
+              // Implementasi navigasi ke pengaturan akun
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur pengaturan akun akan segera hadir!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
           const Divider(height: 1),
@@ -242,7 +260,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Notifikasi',
             Icons.notifications_outlined,
             () {
-              // Navigate to notifications settings
+              // Implementasi navigasi ke notifikasi
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur notifikasi akan segera hadir!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
           const Divider(height: 1),
@@ -251,7 +275,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             'Bantuan & Dukungan',
             Icons.help_outline,
             () {
-              // Navigate to help & support
+              // Implementasi navigasi ke bantuan & dukungan
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Fitur bantuan & dukungan akan segera hadir!'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
             },
           ),
         ],

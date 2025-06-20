@@ -48,6 +48,7 @@ class NewsService {
         throw Exception('Gagal memuat semua artikel dari server');
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Error di fetchAllArticles: $e');
       throw Exception('Tidak dapat terhubung ke server.');
     }
@@ -154,6 +155,7 @@ class NewsService {
       final List<NewsArticle> allNews = await fetchAllArticles();
       final Set<String> uniqueCategories = {};
       for (var news in allNews) {
+        // ignore: unnecessary_null_comparison
         if (news.category != null && news.category!.isNotEmpty) {
           uniqueCategories.add(news.category!);
         }

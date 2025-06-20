@@ -1,7 +1,6 @@
 import 'package:cenah_news/src/pages/categories/category_news_screen.dart';
 import 'package:flutter/material.dart';
-import '../../services/news_services.dart'; // Sesuaikan path jika perlu
-
+import 'package:cenah_news/src/services/news_services.dart';
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
 
@@ -75,7 +74,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
           // 3. Jika data berhasil dimuat
           if (snapshot.hasData && snapshot.data!.isNotEmpty) {
             final categories = snapshot.data!;
-            
+
             // Tampilkan data dalam bentuk Grid
             return RefreshIndicator(
               onRefresh: () async {
@@ -98,27 +97,33 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   return _buildCategoryCard(
                     context,
                     name: categoryName,
-                    icon: _categoryIcons[categoryName] ?? _categoryIcons['Default']!,
+                    icon:
+                        _categoryIcons[categoryName] ??
+                        _categoryIcons['Default']!,
                   );
                 },
               ),
             );
           }
-          
+
           // 4. Kondisi jika tidak ada data atau data kosong
-          return const Center(child: Text('Tidak ada kategori yang ditemukan.'));
+          return const Center(
+            child: Text('Tidak ada kategori yang ditemukan.'),
+          );
         },
       ),
     );
   }
 
   /// Widget untuk membangun satu kartu kategori
-  Widget _buildCategoryCard(BuildContext context, {required String name, required IconData icon}) {
+  Widget _buildCategoryCard(
+    BuildContext context, {
+    required String name,
+    required IconData icon,
+  }) {
     return Card(
       elevation: 2.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           // Navigasi ke halaman daftar berita untuk kategori ini

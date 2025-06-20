@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cenah_news/src/provider/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -10,25 +12,63 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _avatarUrlController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _useDefaultAvatar = true;
 
-  void _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+  void _submitForm(BuildContext context) async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
 
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isLoading = false);
+      final userData = {
+        "name": _nameController.text,
+        "email": _emailController.text,
+        "title": _titleController.text,
+        "password": _passwordController.text,
+        "avatar":
+            _useDefaultAvatar
+                ? 'https://i.pravatar.cc/150?img=${_nameController.text}'
+                : _avatarUrlController.text,
+      };
 
-    _showSuccessDialog(); // Tampilkan dialog berhasil
+      try {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        bool success = await authProvider.register(userData);
+
+        if (success) {
+          _showSuccessDialog();
+        } else {
+          _showSnackBar("Registrasi gagal - Email mungkin sudah terdaftar");
+        }
+      } catch (e) {
+        _showSnackBar("Terjadi kesalahan: ${e.toString()}");
+      } finally {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor:
+            isError
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 
   void _showSuccessDialog() {
@@ -85,8 +125,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _titleController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _avatarUrlController.dispose();
     super.dispose();
   }
 
@@ -107,6 +149,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       suffixIcon: suffixIcon,
+    );
+  }
+
+  Widget _buildAvatarSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Avatar',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Checkbox(
+              value: _useDefaultAvatar,
+              onChanged: (value) {
+                setState(() {
+                  _useDefaultAvatar = value ?? true;
+                });
+              },
+            ),
+            const Text('Gunakan avatar default'),
+          ],
+        ),
+        if (!_useDefaultAvatar) ...[
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _avatarUrlController,
+            decoration: _inputDecoration('Masukkan URL avatar'),
+            keyboardType: TextInputType.url,
+            validator: (value) {
+              if (!_useDefaultAvatar && (value == null || value.isEmpty)) {
+                return 'URL avatar tidak boleh kosong';
+              }
+              if (!_useDefaultAvatar &&
+                  !Uri.tryParse(value!)!.hasAbsolutePath) {
+                return 'URL tidak valid';
+              }
+              return null;
+            },
+          ),
+        ],
+        const SizedBox(height: 8),
+        if (_useDefaultAvatar)
+          Text(
+            'Avatar akan dibuat otomatis berdasarkan nama Anda',
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+      ],
     );
   }
 
@@ -139,24 +231,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   'Isi data di bawah untuk mendaftar',
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
                 // Nama
                 const Text(
-                  'Nama',
+                  'Nama Lengkap',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _nameController,
-                  decoration: _inputDecoration('Masukkan nama Anda'),
+                  decoration: _inputDecoration('Masukkan nama lengkap Anda'),
                   validator:
                       (value) =>
                           value == null || value.isEmpty
                               ? 'Nama tidak boleh kosong'
                               : null,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Title (Profession/Position)
+                const Text(
+                  'Profesi/Posisi',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: _inputDecoration(
+                    'Contoh: Jurnalis, Editor, dll.',
+                  ),
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Profesi tidak boleh kosong'
+                              : null,
+                ),
+                const SizedBox(height: 16),
 
                 // Email
                 const Text(
@@ -171,12 +282,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty)
                       return 'Email tidak boleh kosong';
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                       return 'Email tidak valid';
+                    }
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Avatar Section
+                _buildAvatarSection(),
+                const SizedBox(height: 16),
 
                 // Password
                 const Text(
@@ -209,7 +325,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Konfirmasi Password
                 const Text(
@@ -245,14 +361,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Tombol Daftar
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleRegister,
+                    onPressed: _isLoading ? null : () => _submitForm(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[600],
                       shape: RoundedRectangleBorder(
@@ -276,7 +392,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
 
                 // Link ke Login
                 Center(
@@ -301,7 +417,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
               ],
             ),
           ),

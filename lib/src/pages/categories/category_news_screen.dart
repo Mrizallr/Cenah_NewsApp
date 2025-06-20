@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../models/news_model.dart';
-import '../../services/news_services.dart';
-import '../detail/news_detail_screen.dart';
+import 'package:cenah_news/src/models/news_model.dart';
+import 'package:cenah_news/src/services/news_services.dart';
+import 'package:cenah_news/src/pages/detail/news_detail_screen.dart';
 
 class CategoryNewsScreen extends StatefulWidget {
   final String categoryName;
 
-  const CategoryNewsScreen({
-    super.key,
-    required this.categoryName,
-  });
+  const CategoryNewsScreen({super.key, required this.categoryName});
 
   @override
   State<CategoryNewsScreen> createState() => _CategoryNewsScreenState();
@@ -23,7 +20,8 @@ class _CategoryNewsScreenState extends State<CategoryNewsScreen> {
   void initState() {
     super.initState();
     // Buat URL API berdasarkan nama kategori yang diterima
-    final apiUrl = '${_newsService.baseApiUrl}/news?category=${widget.categoryName}';
+    final apiUrl =
+        '${_newsService.baseApiUrl}/news?category=${widget.categoryName}';
     // Panggil API saat halaman dibuka
     _newsFuture = _newsService.fetchNews(apiUrl);
   }
@@ -57,12 +55,14 @@ class _CategoryNewsScreenState extends State<CategoryNewsScreen> {
             final newsResponse = snapshot.data!;
             if (!newsResponse.success || newsResponse.data.articles.isEmpty) {
               return Center(
-                child: Text('Tidak ada berita untuk kategori "${widget.categoryName}".'),
+                child: Text(
+                  'Tidak ada berita untuk kategori "${widget.categoryName}".',
+                ),
               );
             }
 
             final articles = newsResponse.data.articles;
-            
+
             // Tampilkan daftar berita
             return ListView.builder(
               padding: const EdgeInsets.all(16.0),
@@ -109,12 +109,16 @@ class _CategoryNewsScreenState extends State<CategoryNewsScreen> {
                   width: 100,
                   height: 100,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    width: 100,
-                    height: 100,
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.broken_image, color: Colors.grey),
-                  ),
+                  errorBuilder:
+                      (context, error, stackTrace) => Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: Colors.grey,
+                        ),
+                      ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -133,11 +137,9 @@ class _CategoryNewsScreenState extends State<CategoryNewsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      article.publishedAt, // Ganti dengan format waktu yang lebih baik jika perlu
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
+                      article
+                          .publishedAt, // Ganti dengan format waktu yang lebih baik jika perlu
+                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
                     ),
                   ],
                 ),

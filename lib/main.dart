@@ -1,3 +1,4 @@
+import 'package:cenah_news/src/services/news_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:cenah_news/src/configs/app_routes.dart';
@@ -10,7 +11,10 @@ void main() async {
   await SharedPreferences.getInstance();
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        Provider(create: (_) => NewsService()),
+      ],
       child: MyApp(),
     ),
   );

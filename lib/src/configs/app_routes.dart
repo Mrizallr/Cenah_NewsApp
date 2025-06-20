@@ -1,4 +1,5 @@
 // TODO Implement this library.
+import 'package:cenah_news/src/pages/auth/register_screen.dart';
 import 'package:cenah_news/src/pages/create_article/create_article_screen.dart';
 import 'package:cenah_news/src/pages/edit_article/edit_article_screen.dart';
 import 'package:cenah_news/src/pages/my_articles/my_articles.dart';
@@ -29,6 +30,8 @@ class AppRoutes {
         return MaterialPageRoute(builder: (_) => const SplashScreen());
       case login:
         return MaterialPageRoute(builder: (_) => const LoginScreen());
+      case register:
+        return MaterialPageRoute(builder: (_) => const RegisterScreen());
       case home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
       case myArticles:

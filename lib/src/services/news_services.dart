@@ -53,6 +53,102 @@ class NewsService {
     }
   }
 
+  Future<NewsResponse> fetchMyArticles() async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Anda harus login terlebih dahulu');
+    }
+
+    try {
+      final response = await http
+          .get(
+            Uri.parse('$baseApiUrl/news/user/me'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        return NewsResponse.fromJson(
+          json.decode(utf8.decode(response.bodyBytes)),
+        );
+      } else {
+        throw Exception(
+          'Gagal memuat artikel Anda (Status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'Gagal memuat artikel Anda: ${e.toString().replaceFirst("Exception: ", "")}',
+      );
+    }
+  }
+
+  Future<bool> deleteArticle(String articleId) async {
+    if (articleId.isEmpty) {
+      throw Exception('ID artikel tidak boleh kosong');
+    }
+
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Anda harus login terlebih dahulu');
+    }
+
+    try {
+      final response = await http
+          .delete(
+            Uri.parse('$baseApiUrl/news/$articleId'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return jsonData['success'] == true;
+      } else {
+        throw Exception(
+          'Gagal menghapus artikel (Status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'Gagal menghapus artikel: ${e.toString().replaceFirst("Exception: ", "")}',
+      );
+    }
+  }
+
+  Future<bool> createArticle(Map<String, dynamic> articleData) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Anda harus login terlebih dahulu');
+    }
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseApiUrl/news'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(articleData),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 201) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return jsonData['success'] == true;
+      } else {
+        throw Exception(
+          'Gagal membuat artikel (Status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'Gagal membuat artikel: ${e.toString().replaceFirst("Exception: ", "")}',
+      );
+    }
+  }
+
   Future<List<String>> fetchCategoriesFromNews() async {
     try {
       final List<NewsArticle> allNews = await fetchAllArticles();
@@ -66,6 +162,75 @@ class NewsService {
     } catch (e) {
       print('Error di fetchCategoriesFromNews: $e');
       throw Exception('Gagal mengambil daftar kategori.');
+    }
+  }
+
+  Future<NewsArticle> fetchArticleById(String articleId) async {
+    if (articleId.isEmpty) {
+      throw Exception('ID artikel tidak boleh kosong');
+    }
+
+    try {
+      final response = await http
+          .get(Uri.parse('$baseApiUrl/news/$articleId'))
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        if (jsonData['success'] == true && jsonData['data'] != null) {
+          return NewsArticle.fromJson(jsonData['data']);
+        } else {
+          throw Exception(jsonData['message'] ?? 'Gagal memuat artikel');
+        }
+      } else {
+        throw Exception(
+          'Gagal memuat artikel (Status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'Gagal memuat artikel: ${e.toString().replaceFirst("Exception: ", "")}',
+      );
+    }
+  }
+
+  Future<bool> updateArticle(
+    String articleId,
+    Map<String, dynamic> articleData,
+  ) async {
+    if (articleId.isEmpty) {
+      throw Exception('ID artikel tidak boleh kosong');
+    }
+
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Anda harus login terlebih dahulu');
+    }
+
+    try {
+      final response = await http
+          .put(
+            Uri.parse('$baseApiUrl/news/$articleId'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(articleData),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(utf8.decode(response.bodyBytes));
+        return jsonData['success'] == true;
+      } else {
+        throw Exception(
+          'Gagal memperbarui artikel (Status: ${response.statusCode})',
+        );
+      }
+    } catch (e) {
+      throw Exception(
+        'Gagal memperbarui artikel: ${e.toString().replaceFirst("Exception: ", "")}',
+      );
     }
   }
 
@@ -94,75 +259,85 @@ class NewsService {
     }
   }
 
-  // --- FUNGSI-FUNGSI BARU UNTUK BOOKMARK ---
-
-  /// GET /news/bookmarks/list - Mengambil daftar artikel yang di-bookmark
   Future<List<NewsArticle>> fetchSavedArticles() async {
     final token = await _getToken();
-    if (token == null) throw Exception('Anda harus login untuk melihat artikel tersimpan.');
+    if (token == null)
+      throw Exception('Anda harus login untuk melihat artikel tersimpan.');
 
     final url = Uri.parse('$baseApiUrl/news/bookmarks/list');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(utf8.decode(response.bodyBytes));
       if (jsonData['success'] == true && jsonData['data'] != null) {
         final List<dynamic> bookmarksData = jsonData['data'];
-        return bookmarksData.map((json) => NewsArticle.fromJson(json['article'])).toList();
+        return bookmarksData
+            .map((json) => NewsArticle.fromJson(json['article']))
+            .toList();
       }
       return [];
     } else {
-       final errorData = json.decode(utf8.decode(response.bodyBytes));
-      throw Exception(errorData['message'] ?? 'Gagal memuat artikel tersimpan.');
+      final errorData = json.decode(utf8.decode(response.bodyBytes));
+      throw Exception(
+        errorData['message'] ?? 'Gagal memuat artikel tersimpan.',
+      );
     }
   }
 
-  /// POST /news/{id}/bookmark - Menyimpan artikel
-  // Mengubah return type dari Future<void> menjadi Future<bool>
   Future<bool> addBookmark(String articleId) async {
     final token = await _getToken();
-    if (token == null) throw Exception('Anda harus login untuk menyimpan artikel.');
+    if (token == null)
+      throw Exception('Anda harus login untuk menyimpan artikel.');
 
     final url = Uri.parse('$baseApiUrl/news/$articleId/bookmark');
-    final response = await http.post(url, headers: {'Authorization': 'Bearer $token'});
+    final response = await http.post(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-        return true; // Berhasil disimpan
+      return true; // Berhasil disimpan
     } else {
-       final errorData = json.decode(utf8.decode(response.bodyBytes));
+      final errorData = json.decode(utf8.decode(response.bodyBytes));
       throw Exception(errorData['message'] ?? 'Gagal menyimpan artikel.');
     }
   }
 
-  /// DELETE /news/{id}/bookmark - Menghapus artikel dari simpanan
-  // Mengubah return type dari Future<void> menjadi Future<bool>
   Future<bool> removeBookmark(String articleId) async {
     final token = await _getToken();
     if (token == null) throw Exception('Sesi tidak valid.');
 
     final url = Uri.parse('$baseApiUrl/news/$articleId/bookmark');
-    final response = await http.delete(url, headers: {'Authorization': 'Bearer $token'});
+    final response = await http.delete(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
     if (response.statusCode == 200) {
-        return true; // Berhasil dihapus
+      return true; // Berhasil dihapus
     } else {
       final errorData = json.decode(utf8.decode(response.bodyBytes));
       throw Exception(errorData['message'] ?? 'Gagal menghapus simpanan.');
     }
   }
 
-  /// GET /news/{id}/bookmark - Mengecek status bookmark
   Future<bool> checkBookmarkStatus(String articleId) async {
     final token = await _getToken();
     if (token == null) return false;
 
     final url = Uri.parse('$baseApiUrl/news/$articleId/bookmark');
-    final response = await http.get(url, headers: {'Authorization': 'Bearer $token'});
+    final response = await http.get(
+      url,
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
     if (response.statusCode == 200) {
       final jsonData = json.decode(utf8.decode(response.bodyBytes));
       if (jsonData['success'] == true && jsonData['data'] != null) {
-          return jsonData['data']['isSaved'] ?? false;
+        return jsonData['data']['isSaved'] ?? false;
       }
     }
     return false;

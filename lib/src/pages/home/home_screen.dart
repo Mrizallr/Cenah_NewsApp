@@ -6,6 +6,9 @@ import 'package:cenah_news/src/pages/profile/profile_screen.dart';
 import 'package:cenah_news/src/pages/categories/categories_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart'; // Import provider
+import 'package:cenah_news/src/provider/auth_provider.dart'; // Import AuthProvider
+import 'package:cenah_news/src/pages/saved/saved_articles_screen.dart'; // Import SavedArticlesScreen
 
 // -----------------------------------------------------------------------------
 // WIDGET UTAMA: Pengontrol Halaman (Page Controller)
@@ -20,13 +23,19 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _bottomNavIndex = 0;
 
-  final List<Widget> _pages = [
-    const HomeFeed(),
-    const CategoriesScreen(),
-    const PlaceholderPage(title: 'Saved'), 
-    const PlaceholderPage(title: 'Alerts'), 
-    const ProfileScreen(),
-  ];
+  late List<Widget> _pages; // Deklarasikan sebagai late dan inisialisasi di initState
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const HomeFeed(),
+      const CategoriesScreen(),
+      const SavedArticlesScreen(), // Halaman Saved
+      const PlaceholderPage(title: 'Alerts'), 
+      const ProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +76,14 @@ class HomeFeed extends StatefulWidget {
 
 class _HomeFeedState extends State<HomeFeed> {
   final ScrollController _headlinesScrollController = ScrollController();
-  final NewsService _newsService = NewsService();
+  final NewsService _newsService = NewsService(); // Menggunakan NewsService yang dari services
+  
+  // Controller untuk input pencarian
+  final TextEditingController _searchController = TextEditingController();
+  // Daftar berita yang difilter berdasarkan pencarian
+  List<NewsArticle> _filteredNews = [];
+  // Daftar semua berita asli yang dimuat
+  List<NewsArticle> _allNewsArticles = [];
 
   // --- State untuk Berita ---
   List<NewsArticle> _topHeadlines = [];
@@ -80,17 +96,21 @@ class _HomeFeedState extends State<HomeFeed> {
   bool _isCategoriesLoading = true;
   int _selectedCategoryIndex = 0;
 
-  // --- DATA DUMMY (Hanya untuk User) ---
-  final Map<String, dynamic> userData = const {
-    "name": "Sarah",
-    "avatarUrl": "assets/images/avatar.png",
-  };
-
   @override
   void initState() {
     super.initState();
     // Panggil kedua fungsi untuk mengambil data secara bersamaan
     _fetchInitialData();
+    // Tambahkan listener untuk perubahan teks di search bar
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _headlinesScrollController.dispose();
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
   
   Future<void> _fetchInitialData() async {
@@ -144,14 +164,17 @@ class _HomeFeedState extends State<HomeFeed> {
       if (mounted) {
         setState(() {
           if (newsResponse.success) {
-            final allArticles = newsResponse.data.articles;
-            _topHeadlines = allArticles.where((a) => a.isTrending).toList();
-            _latestNews = allArticles;
+            _allNewsArticles = newsResponse.data.articles; // Simpan semua artikel yang dimuat
+            _topHeadlines = _allNewsArticles.where((a) => a.isTrending).toList();
+            _latestNews = _allNewsArticles; // Awalnya latestNews adalah semua artikel
 
             if (category != null && category != 'All') {
-              _topHeadlines = [];
-              _latestNews = allArticles;
+              // Jika kategori spesifik, reset topHeadlines karena tidak relevan
+              _topHeadlines = []; 
+              _latestNews = _allNewsArticles; // Masih semua artikel di sini, filter nanti
             }
+            // Setelah memuat berita, lakukan pencarian jika ada teks di search bar
+            _performSearch(_searchController.text); 
           } else {
             _newsErrorMessage = newsResponse.message;
           }
@@ -168,10 +191,35 @@ class _HomeFeedState extends State<HomeFeed> {
     }
   }
 
-  @override
-  void dispose() {
-    _headlinesScrollController.dispose();
-    super.dispose();
+  // Fungsi untuk memfilter berita berdasarkan teks pencarian
+  void _performSearch(String query) {
+    if (query.isEmpty) {
+      // Jika query kosong, tampilkan semua berita terbaru
+      setState(() {
+        _filteredNews = _latestNews;
+      });
+    } else {
+      // Filter berita berdasarkan judul atau konten
+      setState(() {
+        _filteredNews = _latestNews.where((article) {
+          final titleLower = article.title.toLowerCase();
+          final contentLower = article.content.toLowerCase();
+          final categoryLower = article.category.toLowerCase();
+          final authorNameLower = article.author.name.toLowerCase();
+          final searchQueryLower = query.toLowerCase();
+
+          return titleLower.contains(searchQueryLower) ||
+              contentLower.contains(searchQueryLower) ||
+              categoryLower.contains(searchQueryLower) ||
+              authorNameLower.contains(searchQueryLower);
+        }).toList();
+      });
+    }
+  }
+
+  // Callback saat teks di search bar berubah
+  void _onSearchChanged() {
+    _performSearch(_searchController.text);
   }
 
   @override
@@ -209,28 +257,37 @@ class _HomeFeedState extends State<HomeFeed> {
       );
     }
 
+    // Tentukan daftar berita yang akan ditampilkan (filtered atau semua)
+    final List<NewsArticle> currentNewsList = 
+        _searchController.text.isNotEmpty ? _filteredNews : _latestNews;
+
     return RefreshIndicator(
       onRefresh: () => _fetchNewsData(category: _categories[_selectedCategoryIndex]),
       child: CustomScrollView(
         slivers: [
           _buildAppBar(),
           _buildSearchBar(),
-          if (_selectedCategoryIndex == 0 && _topHeadlines.isNotEmpty) ...[
+          // Tampilkan Top Headlines hanya jika tidak ada pencarian aktif dan kategori "All" terpilih
+          if (_selectedCategoryIndex == 0 && _searchController.text.isEmpty && _topHeadlines.isNotEmpty) ...[
             _buildSectionTitle('Top Headlines'),
             _buildTopHeadlines(),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
           _buildCategories(), // Widget ini sekarang akan menggunakan state _categories
-          _buildSectionTitle('Latest News'),
-          _latestNews.isEmpty
+          _buildSectionTitle(_searchController.text.isNotEmpty ? 'Hasil Pencarian' : 'Latest News'),
+          currentNewsList.isEmpty
               ? SliverToBoxAdapter(
                   child: Container(
                     height: 200,
                     alignment: Alignment.center,
-                    child: const Text('Tidak ada berita untuk kategori ini.'),
+                    child: Text(
+                      _searchController.text.isNotEmpty 
+                          ? 'Tidak ada hasil untuk "${_searchController.text}".'
+                          : 'Tidak ada berita untuk kategori ini.',
+                    ),
                   ),
                 )
-              : _buildLatestNewsList(),
+              : _buildLatestNewsList(currentNewsList), // Meneruskan daftar berita yang relevan
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
@@ -240,29 +297,48 @@ class _HomeFeedState extends State<HomeFeed> {
   // --- Widget Builders (AppBar, SearchBar, dll) ---
   
   Widget _buildAppBar() {
-    return SliverAppBar(
-      systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light),
-      automaticallyImplyLeading: false,
-      title: Image.asset('assets/images/logo2.png', height: 40),
-      actions: [
-        Row(
-          children: [
-            Text('Hello, ${userData["name"]}',
-                style: const TextStyle(fontSize: 14, color: Colors.black54)),
-            const SizedBox(width: 8),
-            CircleAvatar(
-                backgroundImage: AssetImage(userData["avatarUrl"]!),
-                radius: 20),
-            const SizedBox(width: 16),
+    // Menggunakan Consumer untuk mendapatkan data AuthProvider
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final user = authProvider.currentUser;
+        // Gunakan nama pengguna jika tersedia, jika tidak gunakan fallback
+        final userName = user?.name ?? 'Pengguna'; 
+        // Gunakan avatar pengguna jika tersedia, jika tidak gunakan placeholder
+        final userAvatarUrl = user?.avatar; 
+
+        return SliverAppBar(
+          systemOverlayStyle: const SystemUiOverlayStyle(
+              statusBarIconBrightness: Brightness.dark,
+              statusBarBrightness: Brightness.light),
+          automaticallyImplyLeading: false,
+          title: Image.asset('assets/images/logo2.png', height: 40),
+          actions: [
+            Row(
+              children: [
+                Text('Hello, $userName',
+                    style: const TextStyle(fontSize: 14, color: Colors.black54)),
+                const SizedBox(width: 8),
+                CircleAvatar(
+                    // Gunakan NetworkImage jika ada URL avatar, jika tidak gunakan AssetImage
+                    backgroundImage: userAvatarUrl != null && userAvatarUrl.isNotEmpty
+                        ? NetworkImage(userAvatarUrl) as ImageProvider<Object>?
+                        : const AssetImage('assets/images/avatar.png') as ImageProvider<Object>?, // Fallback local asset
+                    radius: 20,
+                    // Tambahkan child Icon jika avatar tidak ada atau kosong
+                    child: userAvatarUrl == null || userAvatarUrl.isEmpty
+                        ? const Icon(Icons.person, color: Colors.white, size: 20)
+                        : null,
+                ),
+                const SizedBox(width: 16),
+              ],
+            ),
           ],
-        ),
-      ],
-      backgroundColor: Colors.white,
-      floating: true,
-      pinned: true,
-      elevation: 0,
+          backgroundColor: Colors.white,
+          floating: true,
+          pinned: true,
+          elevation: 0,
+        );
+      },
     );
   }
 
@@ -271,9 +347,20 @@ class _HomeFeedState extends State<HomeFeed> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: TextField(
+          controller: _searchController, // Hubungkan dengan controller
           decoration: InputDecoration(
-            hintText: 'Search news...',
+            hintText: 'Cari berita...', // Ubah hint text
             prefixIcon: const Icon(Icons.search, color: Colors.grey),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.grey),
+                    onPressed: () {
+                      _searchController.clear(); // Hapus teks pencarian
+                      _performSearch(''); // Perbarui daftar berita
+                      FocusScope.of(context).unfocus(); // Tutup keyboard
+                    },
+                  )
+                : null,
             filled: true,
             fillColor: Colors.grey[200],
             contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
@@ -281,6 +368,13 @@ class _HomeFeedState extends State<HomeFeed> {
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none),
           ),
+          onChanged: (value) {
+            // _onSearchChanged akan dipanggil melalui listener
+          },
+          onSubmitted: (value) {
+            // Opsional: jika ingin memicu pencarian hanya setelah submit
+            _performSearch(value);
+          },
         ),
       ),
     );
@@ -426,6 +520,8 @@ class _HomeFeedState extends State<HomeFeed> {
                 setState(() => _selectedCategoryIndex = index);
                 // Panggil fetch data lagi dengan kategori yang dipilih
                 _fetchNewsData(category: _categories[index]);
+                // Clear search bar saat ganti kategori
+                _searchController.clear();
               },
               child: Container(
                 padding:
@@ -457,11 +553,12 @@ class _HomeFeedState extends State<HomeFeed> {
     );
   }
 
-  Widget _buildLatestNewsList() {
+  // Mengubah parameter agar bisa menerima daftar berita yang berbeda (filtered/all)
+  Widget _buildLatestNewsList(List<NewsArticle> newsListToDisplay) {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) {
-          final news = _latestNews[index];
+          final news = newsListToDisplay[index]; // Menggunakan daftar yang diberikan
           return GestureDetector(
             onTap: () {
               Navigator.push(
@@ -514,7 +611,7 @@ class _HomeFeedState extends State<HomeFeed> {
             ),
           );
         },
-        childCount: _latestNews.length,
+        childCount: newsListToDisplay.length, // Sesuaikan dengan daftar yang diberikan
       ),
     );
   }

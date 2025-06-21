@@ -1,4 +1,4 @@
-import 'package:cenah_news/src/controllers/news_controller.dart';
+import 'package:cenah_news/src/services/news_services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,13 +11,22 @@ class CreateArticleScreen extends StatefulWidget {
 
 class _CreateArticleScreenState extends State<CreateArticleScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _contentController = TextEditingController();
-  final TextEditingController _readTimeController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
-  final TextEditingController _tagsController = TextEditingController();
-  final FocusNode _titleFocus = FocusNode();
-  final FocusNode _contentFocus = FocusNode();
+  final TextEditingController _titleController = TextEditingController(
+    text: "testinggggg",
+  );
+  final TextEditingController _contentController = TextEditingController(
+    text:
+        "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+  );
+  final TextEditingController _readTimeController = TextEditingController(
+    text: "3 menit",
+  );
+  final TextEditingController _imageUrlController = TextEditingController(
+    text: "https://picsum.photos/200",
+  );
+  final TextEditingController _tagsController = TextEditingController(
+    text: "tags",
+  );
 
   String _category = 'Technology';
   bool _isTrending = false;
@@ -32,18 +41,6 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
     'Entertainment',
     'Science',
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    // Demo data - remove in production
-    _titleController.text = "The Future of AI in Healthcare";
-    _contentController.text =
-        "Artificial intelligence is revolutionizing healthcare...";
-    _readTimeController.text = "5 min read";
-    _imageUrlController.text = "https://picsum.photos/800/600?image=1";
-    _tags.addAll(["AI", "Healthcare", "Technology"]);
-  }
 
   Future<void> _submitArticle() async {
     if (!_formKey.currentState!.validate()) return;
@@ -67,35 +64,17 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
       ).createArticle(articleData);
 
       if (success) {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Article published successfully!'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Artikel berhasil dibuat!')),
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => _isLoading = false);
     }
   }
 
@@ -122,107 +101,53 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
     _readTimeController.dispose();
     _imageUrlController.dispose();
     _tagsController.dispose();
-    _titleFocus.dispose();
-    _contentFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create New Article'),
+        title: const Text('Buat Artikel Baru'),
         centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: 12.0),
             child: IconButton(
-              icon:
-                  _isLoading
-                      ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Icon(Icons.send_rounded),
+              icon: const Icon(Icons.save),
               onPressed: _isLoading ? null : _submitArticle,
-              tooltip: 'Publish',
+              tooltip: 'Simpan Artikel',
             ),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image Preview
-              if (_imageUrlController.text.isNotEmpty)
-                GestureDetector(
-                  onTap: () => _showImageDialog(context),
-                  child: Container(
-                    height: 200,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      image: DecorationImage(
-                        image: NetworkImage(_imageUrlController.text),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.black54,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              // Judul Artikel
+              Text(
+                'Informasi Artikel',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
                 ),
-
-              // Article Title
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
-                focusNode: _titleFocus,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
                 decoration: InputDecoration(
                   labelText: 'Judul Artikel*',
-                  hintText: 'Masukkan judul yang menarik',
-                  floatingLabelBehavior: FloatingLabelBehavior.always,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: colorScheme.primary,
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -233,109 +158,158 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Category and Read Time in Row
-              Row(
-                children: [
-                  // Category Dropdown
-                  Expanded(
-                    flex: 2,
-                    child: DropdownButtonFormField<String>(
-                      value: _category,
-                      decoration: InputDecoration(
-                        labelText: 'Kategori*',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+              // Kategori dan Waktu Baca in Row for larger screens
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth > 600) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: _category,
+                            decoration: InputDecoration(
+                              labelText: 'Kategori*',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            items: _categories.map((String category) {
+                              return DropdownMenuItem<String>(
+                                value: category,
+                                child: Text(category),
+                              );
+                            }).toList(),
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _category = newValue!;
+                              });
+                            },
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _readTimeController,
+                            decoration: InputDecoration(
+                              labelText: 'Waktu Baca*',
+                              hintText: 'contoh: 5 menit',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Waktu baca tidak boleh kosong';
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                      ),
-                      items:
-                          _categories.map((String category) {
+                      ],
+                    );
+                  } else {
+                    return Column(
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _category,
+                          decoration: InputDecoration(
+                            labelText: 'Kategori*',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          items: _categories.map((String category) {
                             return DropdownMenuItem<String>(
                               value: category,
                               child: Text(category),
                             );
                           }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _category = newValue!;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Read Time
-                  Expanded(
-                    flex: 1,
-                    child: TextFormField(
-                      controller: _readTimeController,
-                      decoration: InputDecoration(
-                        labelText: 'Waktu Baca*',
-                        hintText: '5 min',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _category = newValue!;
+                            });
+                          },
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _readTimeController,
+                          decoration: InputDecoration(
+                            labelText: 'Waktu Baca*',
+                            hintText: 'contoh: 5 menit',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Waktu baca tidak boleh kosong';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Required';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
+                      ],
+                    );
+                  }
+                },
               ),
               const SizedBox(height: 20),
 
-              // Image URL
+              // Media Section
+              Text(
+                'Media',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _imageUrlController,
                 decoration: InputDecoration(
-                  labelText: 'Image URL*',
-                  hintText: 'Paste image URL',
-                  prefixIcon: const Icon(Icons.link),
+                  labelText: 'URL Gambar*',
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Image is required';
+                    return 'URL gambar tidak boleh kosong';
                   }
                   return null;
-                },
-                onChanged: (value) {
-                  if (value.isNotEmpty) {
-                    setState(() {});
-                  }
                 },
               ),
               const SizedBox(height: 20),
 
-              // Trending Switch
+              // Settings Section
+              Text(
+                'Pengaturan',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
               Card(
-                elevation: 0,
+                elevation: 2,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: theme.dividerColor, width: 1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.all(12.0),
                   child: SwitchListTile(
-                    title: const Text('Artikel Trending'),
-                    subtitle: const Text('Jadikan sorotan di bagian trending'),
+                    title: const Text('Jadikan artikel trending'),
+                    subtitle: const Text(
+                        'Artikel akan muncul di bagian trending'),
                     value: _isTrending,
                     onChanged: (bool value) {
                       setState(() {
@@ -348,175 +322,138 @@ class _CreateArticleScreenState extends State<CreateArticleScreen> {
               const SizedBox(height: 20),
 
               // Tags Section
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tags',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+              Text(
+                'Tags',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _tagsController,
-                          decoration: InputDecoration(
-                            hintText: 'Add tags (press enter)',
-                            prefixIcon: const Icon(Icons.tag),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _tagsController,
+                              decoration: InputDecoration(
+                                hintText: 'Tambahkan tag',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 12),
+                              ),
+                              onFieldSubmitted: (value) => _addTag(),
                             ),
                           ),
-                          onFieldSubmitted: (value) => _addTag(),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: _addTag,
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 16),
+                            ),
+                            child: const Text('Tambah'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (_tags.isNotEmpty)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _tags.map((tag) {
+                            return Chip(
+                              label: Text(tag),
+                              deleteIcon: const Icon(Icons.close, size: 16),
+                              onDeleted: () => _removeTag(tag),
+                              backgroundColor: theme.colorScheme.secondary
+                                  .withOpacity(0.1),
+                              labelStyle: TextStyle(
+                                color: theme.colorScheme.secondary,
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      FloatingActionButton.small(
-                        onPressed: _addTag,
-                        child: const Icon(Icons.add),
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        _tags.map((tag) {
-                          return InputChip(
-                            label: Text(tag),
-                            deleteIcon: const Icon(Icons.close, size: 16),
-                            onDeleted: () => _removeTag(tag),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          );
-                        }).toList(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Content Editor
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Konten Utama*',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor, width: 1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextFormField(
-                      controller: _contentController,
-                      focusNode: _contentFocus,
-                      maxLines: 10,
-                      decoration: InputDecoration(
-                        hintText: 'Tulis isi artikel Anda di sini...',
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.all(16),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Konten tidak boleh kosong';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Publish Button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _isLoading ? null : _submitArticle,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child:
-                      _isLoading
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Text('Publish Article'),
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Content Section
+              Text(
+                'Konten Artikel',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _contentController,
+                maxLines: 15,
+                decoration: InputDecoration(
+                  labelText: 'Konten Artikel*',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Konten tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 30),
+
+              // Save Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submitArticle,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'SIMPAN ARTIKEL',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                ),
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  void _showImageDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => Dialog(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppBar(
-                  title: const Text('Change Image'),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      TextFormField(
-                        controller: _imageUrlController,
-                        decoration: InputDecoration(
-                          labelText: 'Image URL',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () {
-                            setState(() {});
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Update Image'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
     );
   }
 }

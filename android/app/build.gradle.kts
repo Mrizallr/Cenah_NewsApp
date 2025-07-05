@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.example.cenah_news"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Baris ini diubah untuk secara eksplisit menggunakan NDK versi yang lebih tinggi
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

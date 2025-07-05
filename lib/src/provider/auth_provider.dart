@@ -56,19 +56,19 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       debugPrint('Attempting login with email: $email');
-      
+
       final response = await _authService.login(email, password);
-      
+
       // Validasi response
       if (response.data.token.isEmpty || response.data.user.id.isEmpty) {
         throw Exception('Invalid response data');
       }
 
       await _saveAuthData(response.data);
-      
+
       _isAuthenticated = true;
       debugPrint('Login successful for user: ${response.data.user.email}');
-      
+
       return true;
     } on SocketException {
       debugPrint('Network error: No internet connection');
@@ -136,7 +136,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _saveAuthData(UserData userData) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
+
       await Future.wait([
         prefs.setString('auth_token', userData.token),
         prefs.setString('user_id', userData.user.id),
@@ -148,7 +148,7 @@ class AuthProvider extends ChangeNotifier {
 
       _token = userData.token;
       _currentUser = userData.user;
-      
+
       debugPrint('Auth data saved successfully');
     } catch (e, stack) {
       debugPrint('Save auth data error: $e');

@@ -3,7 +3,7 @@ import 'package:cenah_news/src/configs/app_routes.dart';
 import 'package:cenah_news/src/provider/auth_provider.dart';
 import 'package:provider/provider.dart';
 // Import halaman SavedArticlesScreen yang baru
-import 'package:cenah_news/src/pages/saved/saved_articles_screen.dart'; 
+import 'package:cenah_news/src/pages/saved/saved_articles_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -138,7 +138,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: primaryColor.withOpacity(0.1), // Fixed type error with .withValues()
+              backgroundColor: primaryColor.withOpacity(
+                0.1,
+              ), // Fixed type error with .withValues()
               backgroundImage:
                   user?.avatar != null && user!.avatar.isNotEmpty
                       ? NetworkImage(user.avatar)
@@ -199,7 +201,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         children: [
           _buildOptionTile(context, 'Artikel Saya', Icons.article_outlined, () {
-            Navigator.pushNamed(context, AppRoutes.myArticles); // Menggunakan rute yang didefinisikan
+            Navigator.pushNamed(
+              context,
+              AppRoutes.myArticles,
+            ); // Menggunakan rute yang didefinisikan
           }),
           const Divider(height: 1),
           _buildOptionTile(
@@ -210,7 +215,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Navigasi ke SavedArticlesScreen
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SavedArticlesScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const SavedArticlesScreen(),
+                ),
               );
             },
           ),

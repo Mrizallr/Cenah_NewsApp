@@ -105,7 +105,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: const Text(
                   'Berita Terkini dan Terpercaya',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                     color: Colors.black54,
                   ),

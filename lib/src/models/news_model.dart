@@ -133,6 +133,8 @@ class Author {
     avatar: json["avatar"] ?? "",
   );
 
+  get isNotEmpty => null;
+
   Map<String, dynamic> toJson() => {
     "name": name,
     "title": title,
